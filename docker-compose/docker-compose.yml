@@ -30,24 +30,26 @@ services:
     depends_on:
       - db
       - redis_db
+      - smart-contract-verifier
     image: blockscout/blockscout:${DOCKER_TAG:-latest}
-    build:
-      context: ..
-      dockerfile: ./docker/Dockerfile
-      args:
-        CACHE_EXCHANGE_RATES_PERIOD: ""
-        DISABLE_READ_API: "false"
-        API_PATH: "/"
-        NETWORK_PATH: "/"
-        DISABLE_WEBAPP: "false"
-        DISABLE_WRITE_API: "false"
-        CACHE_ENABLE_TOTAL_GAS_USAGE_COUNTER: ""
-        CACHE_ADDRESS_WITH_BALANCES_UPDATE_INTERVAL: ""
-        SOCKET_ROOT: "/"
-        WOBSERVER_ENABLED: "false"
-        ADMIN_PANEL_ENABLED: ""
+    pull_policy: always
+    #   build:
+    #      context: ..
+    #      dockerfile: ./docker/Dockerfile
+    #      args:
+    #        CACHE_EXCHANGE_RATES_PERIOD: ""
+    #        DISABLE_READ_API: "false"
+    #        API_PATH: "/"
+    #        NETWORK_PATH: "/"
+    #        DISABLE_WEBAPP: "false"
+    #        DISABLE_WRITE_API: "false"
+    #        CACHE_ENABLE_TOTAL_GAS_USAGE_COUNTER: ""
+    #        CACHE_ADDRESS_WITH_BALANCES_UPDATE_INTERVAL: ""
+    #        SOCKET_ROOT: "/"
+    #        WOBSERVER_ENABLED: "false"
+    #        ADMIN_PANEL_ENABLED: ""
     restart: always
-    container_name: 'blockscout'
+    container_name: 'backend'
     links:
       - db:database
     command: sh -c "bin/blockscout eval \"Elixir.Explorer.ReleaseTasks.create_and_migrate()\" && bin/blockscout start"
@@ -55,8 +57,8 @@ services:
       - 'host.docker.internal:host-gateway'
     env_file:
       -  ./envs/common-blockscout.env
-    # ports:
-    #   - 80:80
+        #    ports:
+        #      - 4000:4000
     volumes:
       - ./logs/:/app/logs/
 
@@ -100,7 +102,13 @@ services:
     depends_on:
       - backend
       - frontend
-      - stats
+        #- stats
     extends:
       file: ./services/docker-compose-nginx.yml
       service: proxy
+
+  smart-contract-verifier:
+    extends:
+      file: ./services/docker-compose-smart-contract-verifier.yml
+      service: smart-contract-verifier
+      
